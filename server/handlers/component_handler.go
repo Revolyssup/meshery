@@ -184,7 +184,7 @@ func (h *Handler) GetMeshmodelComponentsByName(rw http.ResponseWriter, r *http.R
 		if ok {
 			m := make(map[string]interface{})
 			_ = json.Unmarshal([]byte(comp.Schema), &m)
-			m = k8s.Format.Prettify(m, false)
+			m = k8s.Format.Prettify(m, true)
 			b, _ := json.Marshal(m)
 			comp.Schema = string(b)
 			comps = append(comps, comp)
@@ -242,7 +242,7 @@ func (h *Handler) GetMeshmodelComponentByModel(rw http.ResponseWriter, r *http.R
 		if ok {
 			m := make(map[string]interface{})
 			_ = json.Unmarshal([]byte(comp.Schema), &m)
-			m = k8s.Format.Prettify(m, false)
+			m = k8s.Format.Prettify(m, true)
 			b, _ := json.Marshal(m)
 			comp.Schema = string(b)
 			comps = append(comps, comp)
@@ -355,7 +355,7 @@ func (h *Handler) GetMeshmodelEntititiesByModel(rw http.ResponseWriter, r *http.
 			comp, ok := r.(v1alpha1.ComponentDefinition)
 			if ok {
 				_ = json.Unmarshal([]byte(comp.Schema), &m)
-				m = k8s.Format.Prettify(m, false)
+				m = k8s.Format.Prettify(m, true)
 				b, _ := json.Marshal(m)
 				comp.Schema = string(b)
 				comps = append(comps, comp)
