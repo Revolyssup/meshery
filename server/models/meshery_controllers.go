@@ -37,8 +37,8 @@ type MesheryControllersHelper struct {
 	ctxOperatorStatusMap map[string]controllers.MesheryControllerStatus
 	// maps each context with a meshsync data handler
 	ctxMeshsyncDataHandlerMap map[string]MeshsyncDataHandler
-
-	mu sync.Mutex
+	dash                      *DashboardK8sResourcesChan
+	mu                        sync.Mutex
 
 	log          logger.Handler
 	oprDepConfig controllers.OperatorDeploymentConfig
@@ -57,15 +57,17 @@ func (mch *MesheryControllersHelper) GetOperatorsStatusMap() map[string]controll
 	return mch.ctxOperatorStatusMap
 }
 
-func NewMesheryControllersHelper(log logger.Handler, operatorDepConfig controllers.OperatorDeploymentConfig, dbHandler *database.Handler) *MesheryControllersHelper {
-	return &MesheryControllersHelper{
+func NewMesheryControllersHelper(log logger.Handler, operatorDepConfig controllers.OperatorDeploymentConfig, dbHandler *database.Handler, dash *DashboardK8sResourcesChan) *MesheryControllersHelper {
+	controllerHelper := &MesheryControllersHelper{
 		ctxControllerHandlersMap:  make(map[string]map[MesheryController]controllers.IMesheryController),
 		log:                       log,
 		oprDepConfig:              operatorDepConfig,
 		ctxOperatorStatusMap:      make(map[string]controllers.MesheryControllerStatus),
 		ctxMeshsyncDataHandlerMap: make(map[string]MeshsyncDataHandler),
 		dbHandler:                 dbHandler,
+		dash:                      dash,
 	}
+	return controllerHelper
 }
 
 // initializes Meshsync data handler for the contexts for whom it has not been

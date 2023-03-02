@@ -19,6 +19,7 @@ type MeshsyncDataHandler struct {
 	broker    broker.Handler
 	dbHandler database.Handler
 	log       logger.Handler
+	dash      *DashboardK8sResourcesChan
 }
 
 func NewMeshsyncDataHandler(broker broker.Handler, dbHandler database.Handler, log logger.Handler) *MeshsyncDataHandler {
@@ -152,7 +153,7 @@ func (mh *MeshsyncDataHandler) meshsyncEventsAccumulator(event *broker.Message) 
 			return ErrDBDelete(result.Error, "")
 		}
 	}
-
+	go mh.dash.PublishDashboardK8sResources()
 	mh.log.Info("Updated database in response to ", event.EventType, " event of object: ", obj.ObjectMeta.Name, " in namespace: ", obj.ObjectMeta.Namespace, " of kind: ", obj.Kind)
 
 	return nil

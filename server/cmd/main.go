@@ -326,7 +326,7 @@ func main() {
 	}
 
 	operatorDeploymentConfig := models.NewOperatorDeploymentConfig(adapterTracker)
-	mctrlHelper := models.NewMesheryControllersHelper(log, operatorDeploymentConfig, dbHandler)
+	mctrlHelper := models.NewMesheryControllersHelper(log, operatorDeploymentConfig, dbHandler, hc.DashboardK8sResourcesChan)
 	k8sComponentsRegistrationHelper := models.NewComponentsRegistrationHelper(log)
 
 	h := handlers.NewHandlerInstance(hc, meshsyncCh, log, brokerConn, k8sComponentsRegistrationHelper, mctrlHelper, dbHandler, events.NewEventStreamer(), regManager, viper.GetString("PROVIDER"))
