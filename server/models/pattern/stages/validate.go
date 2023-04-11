@@ -73,6 +73,19 @@ func Validator(prov ServiceInfoProvider, act ServiceActionProvider, skipValidati
 
 func validateWorkload(comp map[string]interface{}, wc meshmodel.ComponentDefinition) error {
 	schemaByt := []byte(wc.Schema)
+	m := make(map[string]interface{})
+	err := json.Unmarshal(schemaByt, &m)
+	if err != nil {
+		return fmt.Errorf("failed to create schema: %s", err)
+	}
+	m, ok := core.ModifySchemaToBeCompatible(m).(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("could not convert schema to compatible form")
+	}
+	schemaByt, err = json.Marshal(m)
+	if err != nil {
+		return fmt.Errorf("failed to create schema: %s", err)
+	}
 	// Create schema validator from the schema
 	rs := jsonschema.GlobalJSONSchema()
 	if err := json.Unmarshal(schemaByt, rs); err != nil {
@@ -93,7 +106,7 @@ func validateWorkload(comp map[string]interface{}, wc meshmodel.ComponentDefinit
 	if len(errs) > 0 {
 		return fmt.Errorf("invalid settings: %s", errs)
 	}
-
+	// jsonschema.Validate(wc.Schema, jsonSettings)
 	return nil
 }
 

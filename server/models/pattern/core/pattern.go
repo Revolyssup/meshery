@@ -47,6 +47,43 @@ func (p prettifier) DePrettify(m map[string]interface{}, isSchema bool) map[stri
 	return out
 }
 
+// Few fields like `int-or-string` cause issue on both client side as well as server side validation. Overriding such fields to opinionated types helps to get rid of validation errors boths sides.
+// ModifySchemaToBeCompatible is used before sending the schema to the client(front end validator) and sending the schema to (backend) validator.
+func ModifySchemaToBeCompatible(schema interface{}) interface{} {
+	switch x := schema.(type) {
+	case map[interface{}]interface{}:
+		m := map[string]interface{}{}
+		for k, v2 := range x {
+			m[fmt.Sprint(k)] = ModifySchemaToBeCompatible(v2)
+		}
+		return m
+
+	case []interface{}:
+		x2 := make([]interface{}, len(x))
+		for i, v2 := range x {
+			x2[i] = ModifySchemaToBeCompatible(v2)
+		}
+		return x2
+	case map[string]interface{}:
+		m := map[string]interface{}{}
+		foundFormatIntOrString := false
+		for k, v2 := range x {
+			m[k] = ModifySchemaToBeCompatible(v2)
+			//Apply this fix only when the format specifies string|int and type specifies string therefore when there is a contradiction
+			if k == "format" && v2 == "int-or-string" {
+				foundFormatIntOrString = true
+			}
+		}
+		if x["type"] == "string" && foundFormatIntOrString {
+			m["type"] = "integer"
+		}
+		return m
+	case string:
+		return x
+	}
+	return schema
+}
+
 // ConvertMapInterfaceMapString converts map[interface{}]interface{} => map[string]interface{}
 //
 // It will also convert []interface{} => []string
@@ -80,7 +117,6 @@ func ConvertMapInterfaceMapString(v interface{}, prettify bool, isSchema bool) i
 		return x2
 	case map[string]interface{}:
 		m := map[string]interface{}{}
-		foundFormatIntOrString := false
 		for k, v2 := range x {
 			if isSchema && k == "enum" { //While schema prettification, ENUMS are end system defined end user input and therefore should not be prettified/deprettified
 				m[k] = v2
@@ -88,17 +124,6 @@ func ConvertMapInterfaceMapString(v interface{}, prettify bool, isSchema bool) i
 				m[manifests.FormatToReadableString(k)] = ConvertMapInterfaceMapString(v2, prettify, isSchema)
 			} else {
 				m[manifests.DeFormatReadableString(k)] = ConvertMapInterfaceMapString(v2, prettify, isSchema)
-			}
-			if isSchema {
-				//Apply this fix only when the format specifies string|int and type specifies string therefore when there is a contradiction
-				if k == "format" && v2 == "int-or-string" {
-					foundFormatIntOrString = true
-				}
-			}
-		}
-		if isSchema {
-			if x["type"] == "string" && foundFormatIntOrString {
-				m["type"] = "integer"
 			}
 		}
 		return m
